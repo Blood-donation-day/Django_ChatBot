@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from jwt.exceptions import ExpiredSignatureError
 from .serializers import *
 import jwt
 from django.contrib.auth import authenticate
@@ -78,11 +79,9 @@ class LoginAPIView(APIView):
             refresh_token = request.COOKIES.get('refresh', None)
             
             if refresh_token:
-                print(f'리프레쉬 토큰:{refresh_token}')
-                data = {'refresh':refresh_token}
-                # serializer = TokenRefreshSerializer(data=data)
+                # print(f'리프레쉬 토큰:{refresh_token}')
                 refresh = RefreshToken(refresh_token)
-                print(f'새로운 어세스 토큰:{refresh.access_token}')
+                # print(f'새로운 어세스 토큰:{refresh.access_token}')
                 access = str(refresh.access_token)
 
                 res = Response({"acess_token": access}, status=status.HTTP_200_OK)
@@ -151,15 +150,15 @@ class ProfileAPIView(APIView):
     def post(self, request):
         '''
         access토큰에서 user_id값을 가져와 프로필을 변경합니다.
-        프로필이 없는 경우 새로운 프로필을 생성(1:1 관계), 있는경우 기존 프로필을 변경.
-        로그인하지않은 사용자가 요청 시 "로그인이 필요한 서비스입니다." 를 출력합니다.
+        프로필이 없는 경우 새로운 프로필을 생성(1:1 관계), 있는 경우 기존 프로필을 변경.
+        로그인하지 않은 사용자가 요청 시 "로그인이 필요한 서비스입니다." 를 출력합니다.
         '''
         access = request.COOKIES.get('access', None)
-        if access is not None:
-            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-            pk = payload.get('user_id')
-            #user
-            try:
+        
+        try:
+            if access is not None:
+                payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+                pk = payload.get('user_id')
                 # 사용자가 있는 경우
                 user = User.objects.get(pk=pk)
                 
@@ -169,46 +168,53 @@ class ProfileAPIView(APIView):
                 else:
                     # 프로필이 없는 경우 새로운 프로필 생성
                     profile_serializer = ProfileSerializer(data=request.data)
-            except User.DoesNotExist:
-                return Response({"message": "해당하는 사용자가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-            
-            if profile_serializer.is_valid():
-                profile_serializer.save(user=user)
-                
-                res = profile_serializer.data
-                return Response({
-                    "message": "프로필을 수정했습니다.",
-                    "Profile": res
-                                 }, 
-                    status=status.HTTP_200_OK)
-            
-            return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({"message": "로그인이 필요한 서비스입니다."}, status=status.HTTP_401_UNAUTHORIZED)
+        except jwt.exceptions.ExpiredSignatureError:
+            return Response({"message": "토큰이 만료되었습니다. 다시 로그인해주세요."}, status=status.HTTP_401_UNAUTHORIZED)
+        except User.DoesNotExist:
+            return Response({"message": "해당하는 사용자가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
         
-        return Response({"message": "로그인이 필요한 서비스입니다."}, status=status.HTTP_401_UNAUTHORIZED)
-    
+        if profile_serializer.is_valid():
+            profile_serializer.save(user=user)
+            
+            res = profile_serializer.data
+            return Response({
+                "message": "프로필을 수정했습니다.",
+                "Profile": res
+                                }, 
+                status=status.HTTP_200_OK)
+        
+        return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     # 프로필 확인
     def get(self, request):
         # 프로필 보여주기
         
-        access = request.COOKIES.get('access', None)
-        if access is not None:
-            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-            pk = payload.get('user_id')
+        try:
+            access = request.COOKIES.get('access', None)
             
-            try:
-                user = User.objects.get(pk=pk)
+            if access is not None:
+                payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+                pk = payload.get('user_id')
                 
-                if hasattr(user, 'profile'):
-                    profile = user.profile
-                    serializer = ProfileSerializer(profile)
+                try:
+                    user = User.objects.get(pk=pk)
                     
-                    res = serializer.data
-                else:
-                    res = {"message": "프로필이 존재하지 않습니다."}
+                    if hasattr(user, 'profile'):
+                        profile = user.profile
+                        serializer = ProfileSerializer(profile)
+                        
+                        res = serializer.data
+                    else:
+                        res = {"message": "프로필이 존재하지 않습니다."}
+                        
+                    return Response(res, status=status.HTTP_200_OK)
                     
-                return Response(res, status=status.HTTP_200_OK)
+                except User.DoesNotExist:
+                    return Response({"message": "해당하는 사용자가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            
+            else:
+                return Response({"message": "로그인이 필요한 서비스입니다."}, status=status.HTTP_401_UNAUTHORIZED)
                 
-            except User.DoesNotExist:
-                return Response({"message": "해당하는 사용자가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            return Response({"message": "로그인이 필요한 서비스입니다."}, status=status.HTTP_401_UNAUTHORIZED)
+        except ExpiredSignatureError:
+            return Response({"message": "토큰이 만료되었습니다. 다시 로그인해주세요."}, status=status.HTTP_401_UNAUTHORIZED)

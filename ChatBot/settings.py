@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     
     'accounts',
     'api1',
+    'chatting',
 ]
 
 MIDDLEWARE = [
