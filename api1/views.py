@@ -3,6 +3,7 @@ from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from .serializers import *
 import jwt
@@ -77,22 +78,17 @@ class LoginAPIView(APIView):
             refresh_token = request.COOKIES.get('refresh', None)
             
             if refresh_token:
-                data = {'refresh': refresh_token}
-                serializer = TokenRefreshSerializer(data=data)
-                
-                if serializer.is_valid(raise_exception=True):
-                    access = serializer.data.get('access', None)
+                print(f'리프레쉬 토큰:{refresh_token}')
+                data = {'refresh':refresh_token}
+                # serializer = TokenRefreshSerializer(data=data)
+                refresh = RefreshToken(refresh_token)
+                print(f'새로운 어세스 토큰:{refresh.access_token}')
+                access = str(refresh.access_token)
+
+                res = Response({"acess_token": access}, status=status.HTTP_200_OK)
+                res.set_cookie('access', access)
                     
-                    payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
-                    pk = payload.get('user_id')
-                    
-                    user = get_object_or_404(User, pk=pk)
-                    serializer = UserSerializer(instance=user)
-                    
-                    res = Response(serializer.data, status=status.HTTP_200_OK)
-                    res.set_cookie('access', access)
-                    
-                    return res
+                return res
             raise jwt.exceptions.InvalidTokenError
 
         except(jwt.exceptions.InvalidTokenError):
