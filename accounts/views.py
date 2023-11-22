@@ -1,17 +1,20 @@
-from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView, CreateAPIView, UpdateAPIView \
+from rest_framework.generics import CreateAPIView, UpdateAPIView
     
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from jwt.exceptions import ExpiredSignatureError
 from .serializers import *
-import jwt
+import jwt, datetime, os
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 from ChatBot.settings import SECRET_KEY
 from chatting.models import Ticket
+from dotenv import load_dotenv
+load_dotenv()
 
 class SignUpAPIView(CreateAPIView):
     queryset = User.objects.all()
@@ -85,9 +88,8 @@ class LoginAPIView(APIView):
             refresh_token = request.COOKIES.get('refresh', None)
             
             if refresh_token:
-                # print(f'리프레쉬 토큰:{refresh_token}')
+
                 refresh = RefreshToken(refresh_token)
-                # print(f'새로운 어세스 토큰:{refresh.access_token}')
                 access = str(refresh.access_token)
 
                 res = Response({"acess_token": access}, status=status.HTTP_200_OK)
@@ -119,20 +121,27 @@ class LoginAPIView(APIView):
             token = TokenObtainPairSerializer.get_token(user)
             refresh_token = str(token)
             access_token = str(token.access_token)
+            
+            ticket = Ticket.objects.get(user_id=user.pk)
+            if ticket.updated_at.date() != datetime.date.today():
+                ticket.today_limit = os.environ.get('TODAY_LIMIT')
+                ticket.save()
+            
             res = Response(
                 {
                     'user': serializer.data['email'],
-                    'message': 'login success',
+                    'message': '로그인 성공',
                     'token': {
                         'access': access_token,
                         'refresh': refresh_token,
                     },
+                    'today_limit':ticket.today_limit,
                 },
                 status=status.HTTP_200_OK,
             )
             
-            res.set_cookie('access', access_token)
-            res.set_cookie('refresh', refresh_token)
+            res.set_cookie('access', access_token,)
+            res.set_cookie('refresh', refresh_token,)
             return res
         else:
             return Response(
@@ -153,6 +162,9 @@ class LoginAPIView(APIView):
     
 class ProfileAPIView(APIView):
     # 프로필 변경
+    
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request):
         '''
         access토큰에서 user_id값을 가져와 프로필을 변경합니다.

@@ -2,6 +2,9 @@ ChatBot with Django_DRF
 
 <!--
 
+/ 메뉴 /  내정보 /
+
+
 
 오늘의 요리
 
@@ -21,5 +24,7 @@ ChatBot with Django_DRF
 
 
 
+기록  모두
 
+저장(즐겨찾기)  선택한거만
  -->
