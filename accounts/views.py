@@ -24,7 +24,7 @@ class SignUpAPIView(CreateAPIView):
         serializer = UserSerializer(data = request.data)
         if serializer.is_valid():
             user = serializer.save()
-            
+            profile = Profile.objects.create(user=user)
             #ticket생성
             ticket = Ticket.objects.create(user=user)
             # ticket = Ticket.objects.get(user=user)
@@ -37,6 +37,7 @@ class SignUpAPIView(CreateAPIView):
                 {
                     'user': serializer.data['email'],
                     'message': '회원가입에 성공했습니다.',
+                    'lastupdate': user.profile.updated_at,
                     'token': {
                         'access_token': access_token,
                         'refresh_token': refresh_token,
@@ -66,6 +67,7 @@ class LoginAPIView(APIView):
                 # user >> profile.username
                 try:
                     username = user.profile.username
+                    lastlogin = user.updated_at
                 except:
                     username = None
                 serializer = UserSerializer(instance=user)
@@ -73,6 +75,7 @@ class LoginAPIView(APIView):
                     {
                     'username': username,
                     'email': serializer.data['email'], 
+                    'lastlogin': lastlogin
                     },
                     status=status.HTTP_200_OK
                     )
@@ -121,7 +124,6 @@ class LoginAPIView(APIView):
             token = TokenObtainPairSerializer.get_token(user)
             refresh_token = str(token)
             access_token = str(token.access_token)
-            
             ticket = Ticket.objects.get(user_id=user.pk)
             if ticket.updated_at.date() != datetime.date.today():
                 ticket.today_limit = os.environ.get('TODAY_LIMIT')
@@ -129,8 +131,9 @@ class LoginAPIView(APIView):
             
             res = Response(
                 {
-                    'user': serializer.data['email'],
                     'message': '로그인 성공',
+                    'user': serializer.data['email'],
+                    'lastupdate': user.profile.updated_at,
                     'token': {
                         'access': access_token,
                         'refresh': refresh_token,
@@ -236,3 +239,4 @@ class ProfileAPIView(APIView):
                 
         except ExpiredSignatureError:
             return Response({"message": "토큰이 만료되었습니다. 다시 로그인해주세요."}, status=status.HTTP_401_UNAUTHORIZED)
+        
