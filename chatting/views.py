@@ -23,10 +23,8 @@ class ChatbotView(APIView):
     def post(self, request):
         '''
         acess토큰으로 유저를 검증하고 해당유저의 Ticket 모델을 불러옵니다.
-        만약 updated_at 필드가 오늘과 다르면 today_limit를 5로 설정합니다.
-        요청을 보내면 유저의 today_limit > 0 를 확인하고 크다면 today_limit -= 1 후 
-        로직을 진행합니다. 
-        다음은 뭐해야되냐 .... 아직 수정중 
+        요청을 보내면 유저의 today_limit > 0 를 확인하고 크다면 today_limit -= 1 후
+        gpt에게 요청을 보냅니다.
         '''
         
         access = request.COOKIES.get('access', None)

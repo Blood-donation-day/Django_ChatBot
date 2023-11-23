@@ -17,6 +17,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class SignUpAPIView(CreateAPIView):
+    
+    
     queryset = User.objects.all()
     serializer_class = UserSerializer
     
@@ -41,8 +43,8 @@ class SignUpAPIView(CreateAPIView):
                     'token': {
                         'access_token': access_token,
                         'refresh_token': refresh_token,
-                        'ticket': today_limit,
                     },
+                    'ticket': today_limit,
                 },
                 status = status.HTTP_201_CREATED
             )
@@ -94,7 +96,6 @@ class LoginAPIView(APIView):
 
                 refresh = RefreshToken(refresh_token)
                 access = str(refresh.access_token)
-
                 res = Response({"acess_token": access}, status=status.HTTP_200_OK)
                 res.set_cookie('access', access)
                     
@@ -169,11 +170,7 @@ class ProfileAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        '''
-        access토큰에서 user_id값을 가져와 프로필을 변경합니다.
-        프로필이 없는 경우 새로운 프로필을 생성(1:1 관계), 있는 경우 기존 프로필을 변경.
-        로그인하지 않은 사용자가 요청 시 "로그인이 필요한 서비스입니다." 를 출력합니다.
-        '''
+    
         access = request.COOKIES.get('access', None)
         
         try:
@@ -182,7 +179,7 @@ class ProfileAPIView(APIView):
                 pk = payload.get('user_id')
                 # 사용자가 있는 경우
                 user = User.objects.get(pk=pk)
-                
+                lastupdate = user.profile.updated_at
                 # 프로필이 있는 경우 기존 프로필을 업데이트
                 if hasattr(user, 'profile'):
                     profile_serializer = ProfileSerializer(user.profile, data=request.data, partial=True)
@@ -202,6 +199,7 @@ class ProfileAPIView(APIView):
             res = profile_serializer.data
             return Response({
                 "message": "프로필을 수정했습니다.",
+                'lastupdate': lastupdate,
                 "Profile": res
                                 }, 
                 status=status.HTTP_200_OK)
