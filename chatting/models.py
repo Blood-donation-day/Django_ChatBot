@@ -11,6 +11,7 @@ class FoodContainer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='foods')
     filter = models.JSONField()
     foodname = models.CharField(max_length=50)
+    intro = models.CharField(max_length=200)
     ingredients = models.CharField(max_length=200)
     recipe = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
