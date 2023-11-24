@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'drf_spectacular',
     
     'accounts',
-    'api1',
     'chatting',
 ]
 
