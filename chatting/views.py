@@ -6,7 +6,6 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from ChatBot.settings import SECRET_KEY
 from chatting.models import Ticket, FoodContainer
 from accounts.models import User
-from .serializers import PromptSerializer
 from .prompt import GPTPrompt
 import jwt, json
 
@@ -38,6 +37,7 @@ class ChatbotView(APIView):
             
             if ticket.today_limit > 0:
                 ticket.today_limit -= 1
+                ticket.total_used_count += 1
                 ticket.save()
             else:
                 return Response({"error": "남은 무료제공 횟수가 모두 소진되었습니다. 내일 다시 시도해주세요."},status=status.HTTP_403_FORBIDDEN)
@@ -48,6 +48,7 @@ class ChatbotView(APIView):
         # GPT응답 에러
         if 'error' in res:
             ticket.today_limit += 1
+            ticket.total_used_count -= 1
             ticket.save()
             return Response({'error': 'ChatGPT응답에러: ' + res}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -70,6 +71,7 @@ class ChatbotView(APIView):
 
         except:
             ticket.today_limit += 1
+            ticket.total_used_count -= 1
             ticket.save()
             return Response({'error':'모델생성에 실패했습니다. 다음에 다시 시도해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
             
