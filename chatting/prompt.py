@@ -1,5 +1,7 @@
-import openai, jwt, os
+import openai, jwt, os, requests
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+from uuid import uuid4
 load_dotenv()
 
 
@@ -53,3 +55,25 @@ class GPTPrompt:
             return self.error.message
         response = completions.choices[0].message.content.strip()
         return response
+    
+
+
+def image_search_save(search):
+    params = {
+            "q": search, 
+            "tbm": "isch",             
+    }
+    html = requests.get("https://www.google.com/search", params=params,  timeout=10)
+    
+    soup = BeautifulSoup(html.content, 'html.parser')
+    images = soup.select('div img') 
+    image_url = images[1]['src'] 
+    
+    response = requests.get(image_url)
+    image_data = response.content
+    uuid = str(uuid4())
+    with open(f'{uuid}.png', 'wb') as img_file:
+        img_file.write(image_data)
+        
+    
+

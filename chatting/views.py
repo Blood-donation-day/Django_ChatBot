@@ -102,9 +102,11 @@ class ChatbotView(APIView):
             try:
                 # 해당 페이지 가져오기
                 current_page = paginator.page(page_number) 
+            except PageNotAnInteger:
+                # 페이지가 정수가 아닌 경우, 첫 페이지 가져오기
+                current_page = paginator.page(1)
             except EmptyPage:
-                # 페이지가 비어 있는 경우, 마지막 페이지 가져오기
-                current_page = paginator.page(paginator.num_pages)
+                return Response({'error': '마지막 페이지 입니다.'}, status=status.HTTP_404_NOT_FOUND)
 
             response_data_list = []
 

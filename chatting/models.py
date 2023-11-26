@@ -14,6 +14,7 @@ class FoodContainer(models.Model):
     intro = models.CharField(max_length=200)
     ingredients = models.CharField(max_length=200)
     recipe = models.TextField()
+    thumbnail = models.ImageField(upload_to='chatting/thumbnail/', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
