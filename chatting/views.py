@@ -1,7 +1,7 @@
 
 from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.shortcuts import get_object_or_404
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,13 +9,15 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from ChatBot.settings import SECRET_KEY
 from chatting.models import Ticket, FoodContainer
 from accounts.models import User
+from core.permissions import IsOwner
+from .serializers import FoodContainerSerializer
 from .prompt import GPTPrompt, image_search_save
 import jwt, json
 
 
 
-class ChatbotView(APIView):
-
+class ChatbotAPIView(APIView):
+    
     permission_classes = [IsAuthenticatedOrReadOnly]
     
     def post(self, request):
@@ -72,7 +74,6 @@ class ChatbotView(APIView):
                     recipe=recipe,
                 )
             print('food모델 생성됨: ', food.foodname)
-            image_search_save(foodname, food)
             
         except:
             ticket.today_limit += 1
@@ -80,6 +81,8 @@ class ChatbotView(APIView):
             ticket.save()
             return Response({'error':'모델생성에 실패했습니다. 다음에 다시 시도해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
             
+        image_search_save(foodname, food)
+        
         return Response({
             'Food': res,
             "today_limit": ticket.today_limit,
@@ -109,14 +112,22 @@ class ChatbotView(APIView):
             except EmptyPage:
                 return Response({'error': '마지막 페이지 입니다.'}, status=status.HTTP_404_NOT_FOUND)
 
-            response_data_list = []
-
             # 쿼리셋을 순회하면서 정보 추출
             # 리스트: 이름, 재료
             food_list = [{
+                'pk': foodcontainer.pk,
+                'thumbnail': foodcontainer.thumbnail.url,
                 'foodname': foodcontainer.foodname,
                 'ingredients': foodcontainer.ingredients,
-                'created_at': foodcontainer.created_at,
             } for foodcontainer in current_page]
 
         return JsonResponse(food_list, safe=False,  status=status.HTTP_200_OK)
+    
+    
+class ChatDetailAPIView(RetrieveAPIView):
+    
+    permission_classes = [IsOwner, IsAuthenticatedOrReadOnly]
+    
+    queryset = FoodContainer.objects.all()
+    serializer_class = FoodContainerSerializer
+    

@@ -77,9 +77,15 @@ def image_search_save(foodname, foodmodel):
     
     #이미지 uuid로 저장
     uuid = str(uuid4())
-    with open(f'/media/thumbnail/{uuid}.png', 'wb') as img_file:
+    
+    save_directory = os.path.join('media', 'chatting', 'thumbnail')
+    
+    # 이미지 저장
+    with open(os.path.join(save_directory, f'{uuid}.png'), 'wb') as img_file:
         img_file.write(image_data)
     
-    foodmodel.thumbnail = f'/media/thumbnail/{uuid}.png'
+    # 모델에 이미지 경로 저장
+   
+    foodmodel.thumbnail = os.path.join('chatting', 'thumbnail', f'{uuid}.png')
     foodmodel.save()
 
