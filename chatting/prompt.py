@@ -58,22 +58,28 @@ class GPTPrompt:
     
 
 
-def image_search_save(search):
+def image_search_save(foodname, foodmodel):
+    #파라미터 설정
     params = {
-            "q": search, 
-            "tbm": "isch",             
+            "q": foodname, 
+            "tbm": "isch",   # 이미지 검색          
     }
     html = requests.get("https://www.google.com/search", params=params,  timeout=10)
     
     soup = BeautifulSoup(html.content, 'html.parser')
     images = soup.select('div img') 
+    
+    # 대표 이미지 
     image_url = images[1]['src'] 
     
     response = requests.get(image_url)
     image_data = response.content
-    uuid = str(uuid4())
-    with open(f'{uuid}.png', 'wb') as img_file:
-        img_file.write(image_data)
-        
     
+    #이미지 uuid로 저장
+    uuid = str(uuid4())
+    with open(f'/media/thumbnail/{uuid}.png', 'wb') as img_file:
+        img_file.write(image_data)
+    
+    foodmodel.thumbnail = f'/media/thumbnail/{uuid}.png'
+    foodmodel.save()
 

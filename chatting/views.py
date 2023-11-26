@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from ChatBot.settings import SECRET_KEY
 from chatting.models import Ticket, FoodContainer
 from accounts.models import User
-from .prompt import GPTPrompt
+from .prompt import GPTPrompt, image_search_save
 import jwt, json
 
 
@@ -72,7 +72,8 @@ class ChatbotView(APIView):
                     recipe=recipe,
                 )
             print('food모델 생성됨: ', food.foodname)
-
+            image_search_save(foodname, food)
+            
         except:
             ticket.today_limit += 1
             ticket.total_used_count -= 1
