@@ -1,4 +1,7 @@
 
+from django.http import JsonResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -25,7 +28,7 @@ class ChatbotView(APIView):
 
         access = request.COOKIES.get('access', None)
         prompt = request.data.get('prompt', None)
-        
+        print('받은요청:', prompt)
         if prompt is None:
             return Response({'error': '올바른 요청이 아닙니다. '}, status=status.HTTP_204_NO_CONTENT)
         
@@ -68,6 +71,7 @@ class ChatbotView(APIView):
                     ingredients=ingredients,
                     recipe=recipe,
                 )
+            print('food모델 생성됨: ', food.foodname)
 
         except:
             ticket.today_limit += 1
@@ -79,3 +83,37 @@ class ChatbotView(APIView):
             'Food': res,
             "today_limit": ticket.today_limit,
             }, status=status.HTTP_200_OK)
+
+    def get(self, request):
+        '''
+        acess토큰으로 유저를 검증하고 해당유저의 FoodContainer 모델을 불러옵니다.
+        페이지 단위로 모델 정보를 반환합니다.
+        '''
+        access = request.COOKIES.get('access', None)
+        page_number = request.GET.get('page', 1)
+        
+        if access is not None:
+            payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
+            pk = payload.get('user_id')
+            
+            foodcontainers = FoodContainer.objects.filter(user_id=pk)
+            paginator = Paginator(foodcontainers, 5) 
+
+            try:
+                # 해당 페이지 가져오기
+                current_page = paginator.page(page_number) 
+            except EmptyPage:
+                # 페이지가 비어 있는 경우, 마지막 페이지 가져오기
+                current_page = paginator.page(paginator.num_pages)
+
+            response_data_list = []
+
+            # 쿼리셋을 순회하면서 정보 추출
+            # 리스트: 이름, 재료
+            food_list = [{
+                'foodname': foodcontainer.foodname,
+                'ingredients': foodcontainer.ingredients,
+                'created_at': foodcontainer.created_at,
+            } for foodcontainer in current_page]
+
+        return JsonResponse(food_list, safe=False,  status=status.HTTP_200_OK)

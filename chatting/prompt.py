@@ -35,7 +35,7 @@ class GPTPrompt:
 
         
     def add_prompt(self, prompt):
-        self.messages.append({"role": "user", "content": prompt})
+        self.messages.append({"role": "user", "content": str(prompt)})
         
     def message_check(self):
         print(self.messages)
