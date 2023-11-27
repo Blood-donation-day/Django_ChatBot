@@ -28,7 +28,7 @@ class ChatbotAPIView(APIView):
         에러가 발생했으면 에러메세지를 반환합니다. 
         '''
 
-        access = request.COOKIES.get('access', None)
+        access = request.META.get('HTTP_ACCESS', None)
         prompt = request.data.get('prompt', None)
         print('받은요청:', prompt)
         if prompt is None:
@@ -93,7 +93,7 @@ class ChatbotAPIView(APIView):
         acess토큰으로 유저를 검증하고 해당유저의 FoodContainer 모델을 불러옵니다.
         페이지 단위로 모델 정보를 반환합니다.
         '''
-        access = request.COOKIES.get('access', None)
+        access = request.META.get('HTTP_ACCESS', None)
         page_number = request.GET.get('page', 1)
         
         if access is not None:
@@ -101,7 +101,7 @@ class ChatbotAPIView(APIView):
             pk = payload.get('user_id')
             
             foodcontainers = FoodContainer.objects.filter(user_id=pk)
-            paginator = Paginator(foodcontainers, 5) 
+            paginator = Paginator(foodcontainers, 3) 
 
             try:
                 # 해당 페이지 가져오기
@@ -126,7 +126,7 @@ class ChatbotAPIView(APIView):
     
 class ChatDetailAPIView(RetrieveAPIView):
     
-    permission_classes = [IsOwner, IsAuthenticatedOrReadOnly]
+    permission_classes = [IsOwner]
     
     queryset = FoodContainer.objects.all()
     serializer_class = FoodContainerSerializer

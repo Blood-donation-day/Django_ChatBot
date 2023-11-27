@@ -1,5 +1,7 @@
 ChatBot with Django_DRF
 
+https://github.com/Blood-donation-day/Django_Chat-FE
+
 <!--
 
 프론트 필요한것들 시간없으면 밑에있는건 포기
@@ -15,7 +17,7 @@ charroom 저장
 
 회원탈퇴
 
-
+마이페이지 접속시 무한요청
 
 
 

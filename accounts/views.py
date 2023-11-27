@@ -4,17 +4,39 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from core.permissions import GetToken
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from jwt.exceptions import ExpiredSignatureError
 from .serializers import *
-import jwt, datetime, os
+import jwt, datetime, os, re
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 from ChatBot.settings import SECRET_KEY
 from chatting.models import Ticket
 from dotenv import load_dotenv
 load_dotenv()
+
+
+
+class RefreshAPIView(APIView):
+    
+    def post(self, request):
+    # 토큰 만료 시 토큰 갱신
+
+        refresh_token = request.data.get('refresh', None)
+        print(refresh_token)
+        
+        if refresh_token:
+
+            refresh = RefreshToken(refresh_token)
+            access = str(refresh.access_token)
+            res = Response({"access": access}, status=status.HTTP_200_OK)
+            res.set_cookie('access', access)
+                
+            return res
+        raise jwt.exceptions.InvalidTokenError
+
 
 class SignUpAPIView(CreateAPIView):
     
@@ -58,14 +80,15 @@ class SignUpAPIView(CreateAPIView):
 class LoginAPIView(APIView):
     #내 정보 확인, 토큰 리프레쉬
     def get(self, request):
-        try:
+        try:        
+            access = GetToken(request)
             
-            access = request.COOKIES.get('access', None)
             if access is not None:
                 payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
                 pk = payload.get('user_id')
                 #user
                 user = get_object_or_404(User, pk=pk)
+                
                 # user >> profile.username
                 try:
                     username = user.profile.username
@@ -87,21 +110,6 @@ class LoginAPIView(APIView):
                 },
                 status = status.HTTP_401_UNAUTHORIZED
             )
-
-        except(jwt.exceptions.ExpiredSignatureError):
-            # 토큰 만료 시 토큰 갱신
-            refresh_token = request.COOKIES.get('refresh', None)
-            
-            if refresh_token:
-
-                refresh = RefreshToken(refresh_token)
-                access = str(refresh.access_token)
-                res = Response({"acess_token": access}, status=status.HTTP_200_OK)
-                res.set_cookie('access', access)
-                    
-                return res
-            raise jwt.exceptions.InvalidTokenError
-
         except(jwt.exceptions.InvalidTokenError):
 
             return Response(
@@ -126,6 +134,8 @@ class LoginAPIView(APIView):
             refresh_token = str(token)
             access_token = str(token.access_token)
             ticket = Ticket.objects.get(user_id=user.pk)
+            
+            
             if ticket.updated_at.date() != datetime.date.today():
                 ticket.today_limit = os.environ.get('TODAY_LIMIT')
                 ticket.save()
@@ -144,8 +154,8 @@ class LoginAPIView(APIView):
                 status=status.HTTP_200_OK,
             )
             
-            res.set_cookie('access', access_token,)
-            res.set_cookie('refresh', refresh_token,)
+            res.set_cookie('access', access_token, samesite='None', secure=False)
+            res.set_cookie('refresh', refresh_token, samesite='None', secure=False)
             return res
         else:
             return Response(
@@ -170,8 +180,8 @@ class ProfileAPIView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-    
-        access = request.COOKIES.get('access', None)
+        
+        access = GetToken(request)
         
         try:
             if access is not None:
@@ -210,7 +220,7 @@ class ProfileAPIView(APIView):
         # 프로필 보여주기
         
         try:
-            access = request.COOKIES.get('access', None)
+            access = GetToken(request)
             
             if access is not None:
                 payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])

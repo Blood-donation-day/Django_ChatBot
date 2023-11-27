@@ -52,6 +52,8 @@ INSTALLED_APPS = [
 # CORS 관련 추가
 CORS_ORIGIN_ALLOW_ALL=True # <- 모든 호스트 허용
 CORS_ALLOW_CREDENTIALS = True # <-쿠키가 cross-site HTTP 요청에 포함될 수 있다
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
