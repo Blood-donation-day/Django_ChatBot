@@ -12,7 +12,10 @@ class IsOwner(BasePermission):
 
 def GetToken(request):
     token = request.META.get('HTTP_AUTHORIZATION', None)
-    match = re.search(r'Bearer (.+)', token)
-    if match:
-        token = match.group(1)
-    return token
+    if token:
+        match = re.search(r'Bearer (.+)', token)
+        if match:
+            token = match.group(1)
+        return token
+    
+    return None

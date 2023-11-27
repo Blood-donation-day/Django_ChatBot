@@ -30,10 +30,11 @@ class RefreshAPIView(APIView):
         if refresh_token:
 
             refresh = RefreshToken(refresh_token)
+            
             access = str(refresh.access_token)
             res = Response({"access": access}, status=status.HTTP_200_OK)
             res.set_cookie('access', access)
-                
+            
             return res
         raise jwt.exceptions.InvalidTokenError
 
@@ -136,7 +137,7 @@ class LoginAPIView(APIView):
             ticket = Ticket.objects.get(user_id=user.pk)
             
             
-            if ticket.updated_at.date() != datetime.date.today():
+            if ticket.updated_at.date() != datetime.date.today() and ticket.today_limit < os.environ.get('TODAY_LIMIT'):
                 ticket.today_limit = os.environ.get('TODAY_LIMIT')
                 ticket.save()
             
@@ -207,6 +208,7 @@ class ProfileAPIView(APIView):
             profile_serializer.save(user=user)
             
             res = profile_serializer.data
+            
             return Response({
                 "message": "프로필을 수정했습니다.",
                 'lastupdate': lastupdate,

@@ -96,12 +96,13 @@ class ChatbotAPIView(APIView):
         access = GetToken(request)
         
         page_number = request.GET.get('page', 1)
+        search_filter = request.GET.get('q', '') 
         
         if access is not None:
             payload = jwt.decode(access, SECRET_KEY, algorithms=['HS256'])
             pk = payload.get('user_id')
             
-            foodcontainers = FoodContainer.objects.filter(user_id=pk)
+            foodcontainers = FoodContainer.objects.filter(user_id=pk, foodname__icontains=search_filter)
             paginator = Paginator(foodcontainers, 3) 
 
             try:
@@ -131,4 +132,4 @@ class ChatDetailAPIView(RetrieveAPIView):
     
     queryset = FoodContainer.objects.all()
     serializer_class = FoodContainerSerializer
-    
+
