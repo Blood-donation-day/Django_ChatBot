@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from jwt.exceptions import ExpiredSignatureError
 from .serializers import *
-import jwt, datetime, os, re
+import jwt, datetime, os
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
 from ChatBot.settings import SECRET_KEY

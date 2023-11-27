@@ -8,8 +8,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from ChatBot.settings import SECRET_KEY
 from chatting.models import Ticket, FoodContainer
-from accounts.models import User
-from core.permissions import IsOwner
+from core.permissions import IsOwner, GetToken
 from .serializers import FoodContainerSerializer
 from .prompt import GPTPrompt, image_search_save
 import jwt, json
@@ -28,7 +27,8 @@ class ChatbotAPIView(APIView):
         에러가 발생했으면 에러메세지를 반환합니다. 
         '''
 
-        access = request.META.get('HTTP_ACCESS', None)
+        access = GetToken(request)
+        
         prompt = request.data.get('prompt', None)
         print('받은요청:', prompt)
         if prompt is None:
@@ -93,7 +93,8 @@ class ChatbotAPIView(APIView):
         acess토큰으로 유저를 검증하고 해당유저의 FoodContainer 모델을 불러옵니다.
         페이지 단위로 모델 정보를 반환합니다.
         '''
-        access = request.META.get('HTTP_ACCESS', None)
+        access = GetToken(request)
+        
         page_number = request.GET.get('page', 1)
         
         if access is not None:
