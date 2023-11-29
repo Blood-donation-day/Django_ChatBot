@@ -159,7 +159,9 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Django ChatBot Project',
+    'TITLE': 'Django ChatBot Project API Document',
+    'CONTACT': {'name': '김창환', 'url': 'https://github.com/Blood-donation-day', 'email': '98susckdghks@naver.com'},
+    'VERSION': '1.0.0',
 }
 
 SIMPLE_JWT = {
