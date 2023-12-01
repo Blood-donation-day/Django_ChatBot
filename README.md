@@ -1,6 +1,6 @@
 # ChatBot with Django_DRF
 
-## 요구사항에 맞게 음식을 추천해주는 AI음식추천 서비스
+## 요구사항에 맞는 음식을 추천해주는 AI음식추천 서비스
 
 FE repo: https://github.com/Blood-donation-day/Django_Chat-FE
 
@@ -10,7 +10,7 @@ FE repo: https://github.com/Blood-donation-day/Django_Chat-FE
 [2. 개발 환경 및 배포 URL](#2-개발-환경-및-배포-url)<br>
 [3. 개발 일정](#3-프로젝트-구조와-개발-일정)<br>
 [4. 데이터베이스 모델링(ERD)](#4-데이터베이스-모델링erd)<br>
-[5. URL 구조](#5-url-구조)<br>
+[5. API 명세서](#5-api-명세)<br>
 [6. UI](#6-ui)<br>
 [7. 기능 요구사항 목록](#7-기능-요구사항-목록)<br>
 [8. 개발하면서 느낀 점](#8-개발과정과-느낀점)<br>
@@ -58,6 +58,12 @@ FE repo: https://github.com/Blood-donation-day/Django_Chat-FE
 
 프론트엔드 페이지
 https://blood-donation-day.github.io/Django_Chat-FE/
+
+```
+테스트계정
+test1234@test1234.com
+mypwd1234
+```
 
 백엔드
 https://blood-donation-day.com
@@ -127,7 +133,7 @@ https://blood-donation-day.com/api/swagger/
 
 <img src=readme/ERD.png>
 
-## 5. URL 구조
+## 5. API 명세
 
 #### Swagger문서
 
